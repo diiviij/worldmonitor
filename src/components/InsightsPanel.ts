@@ -690,7 +690,6 @@ export class InsightsPanel extends Panel {
     } catch {
       // Best effort; fallback regeneration still works from memory reset.
     }
-    if (!this.element?.isConnected) return;
 
     if (!isAnyAiProviderEnabled()) {
       this.setDataBadge('unavailable');

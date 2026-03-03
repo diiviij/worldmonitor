@@ -716,11 +716,7 @@ async function validateSecretAgainstProvider(key, rawValue, context = {}) {
     }
 
     case 'ACLED_ACCESS_TOKEN': {
-      const now = new Date();
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const fmt = (d) => d.toISOString().split('T')[0];
-      const acledProbeUrl = `https://acleddata.com/api/acled/read?event_type=Protests&event_date=${fmt(weekAgo)}|${fmt(now)}&event_date_where=BETWEEN&limit=1&_format=json`;
-      const response = await fetchWithTimeout(acledProbeUrl, {
+      const response = await fetchWithTimeout('https://acleddata.com/api/acled/read?_format=json&limit=1', {
         headers: {
           Accept: 'application/json',
           Authorization: `Bearer ${value}`,

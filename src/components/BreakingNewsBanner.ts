@@ -72,7 +72,7 @@ export class BreakingNewsBanner {
     if (!settings.soundEnabled || !this.audio) return;
     if (Date.now() - this.lastSoundMs < SOUND_COOLDOWN_MS) return;
     this.audio.currentTime = 0;
-    this.audio.play()?.catch(() => {});
+    this.audio.play().catch(() => {});
     this.lastSoundMs = Date.now();
   }
 
@@ -165,7 +165,20 @@ export class BreakingNewsBanner {
     }
 
     this.activeAlerts.push(active);
-    this.playSound();
+
+    const alertTextLow = alert.headline.toLowerCase();
+    if (alertTextLow.includes('siren') || alertTextLow.includes('pop')) {
+      const settings = getAlertSettings();
+      if (settings.soundEnabled && 'speechSynthesis' in window) {
+        const faah = new SpeechSynthesisUtterance('faah');
+        faah.volume = 1;
+        faah.rate = 1.2;
+        window.speechSynthesis.speak(faah);
+      }
+    } else {
+      this.playSound();
+    }
+    
     this.updateOffset();
   }
 

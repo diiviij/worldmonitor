@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve, dirname, extname } from 'path';
 import { mkdir, readFile, writeFile } from 'fs/promises';
@@ -567,7 +567,10 @@ function youtubeLivePlugin(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  Object.assign(process.env, loadEnv(mode, process.cwd(), ''));
+
+  return {
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
@@ -1161,5 +1164,6 @@ export default defineConfig({
         },
       },
     },
-  },
+    },
+  };
 });

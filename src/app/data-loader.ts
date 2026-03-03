@@ -85,8 +85,8 @@ import { canQueueAiClassification, AI_CLASSIFY_MAX_PER_FEED } from '@/services/a
 import { classifyWithAI } from '@/services/threat-classifier';
 import { ingestHeadlines } from '@/services/trending-keywords';
 import type { ListFeedDigestResponse } from '@/generated/client/worldmonitor/news/v1/service_client';
-import type { GetSectorSummaryResponse, ListMarketQuotesResponse } from '@/generated/client/worldmonitor/market/v1/service_client';
-import { mountCommunityWidget } from '@/components/CommunityWidget';
+import type { GetSectorSummaryResponse } from '@/generated/client/worldmonitor/market/v1/service_client';
+
 import { ResearchServiceClient } from '@/generated/client/worldmonitor/research/v1/service_client';
 import {
   MarketPanel,
@@ -190,7 +190,6 @@ export class DataLoaderManager implements AppModule {
   init(): void {}
 
   destroy(): void {
-    this.applyTimeRangeFilterToNewsPanelsDebounced.cancel();
     stopOrefPolling();
   }
 
@@ -881,7 +880,7 @@ export class DataLoaderManager implements AppModule {
 
     this.ctx.allNews = collectedNews;
     this.ctx.initialLoadComplete = true;
-    mountCommunityWidget();
+
     updateAndCheck([
       { type: 'news', region: 'global', count: collectedNews.length },
     ]).then(anomalies => {
@@ -934,95 +933,55 @@ export class DataLoaderManager implements AppModule {
 
   async loadMarkets(): Promise<void> {
     try {
-      // Hydrate markets from bootstrap (same pattern as sectors) — instant data on page load
-      const hydratedMarkets = getHydratedData('marketQuotes') as ListMarketQuotesResponse | undefined;
-      let stocksResult: Awaited<ReturnType<typeof fetchMultipleStocks>>;
-
-      if (hydratedMarkets?.quotes?.length) {
-        const symbolMetaMap = new Map(MARKET_SYMBOLS.map((s) => [s.symbol, s]));
-        const data = hydratedMarkets.quotes.map((q) => ({
-          symbol: q.symbol,
-          name: symbolMetaMap.get(q.symbol)?.name || q.name,
-          display: symbolMetaMap.get(q.symbol)?.display || q.display || q.symbol,
-          price: q.price != null ? q.price : null,
-          change: q.change ?? null,
-          sparkline: q.sparkline?.length > 0 ? q.sparkline : undefined,
-        }));
-        this.ctx.latestMarkets = data;
-        (this.ctx.panels['markets'] as MarketPanel).renderMarkets(data);
-        stocksResult = { data, skipped: hydratedMarkets.finnhubSkipped || undefined, rateLimited: hydratedMarkets.rateLimited || undefined };
-      } else {
-        stocksResult = await fetchMultipleStocks(MARKET_SYMBOLS, {
-          onBatch: (partialStocks) => {
-            this.ctx.latestMarkets = partialStocks;
-            (this.ctx.panels['markets'] as MarketPanel).renderMarkets(partialStocks);
-          },
-        });
-        this.ctx.latestMarkets = stocksResult.data;
-        (this.ctx.panels['markets'] as MarketPanel).renderMarkets(stocksResult.data, stocksResult.rateLimited);
-      }
+      const stocksResult = await fetchMultipleStocks(MARKET_SYMBOLS, {
+        onBatch: (partialStocks) => {
+          this.ctx.latestMarkets = partialStocks;
+          (this.ctx.panels['markets'] as MarketPanel).renderMarkets(partialStocks);
+        },
+      });
 
       const finnhubConfigMsg = 'FINNHUB_API_KEY not configured — add in Settings';
+      this.ctx.latestMarkets = stocksResult.data;
+      (this.ctx.panels['markets'] as MarketPanel).renderMarkets(stocksResult.data, stocksResult.rateLimited);
 
       if (stocksResult.rateLimited && stocksResult.data.length === 0) {
         const rlMsg = 'Market data temporarily unavailable (rate limited) — retrying shortly';
+        this.ctx.panels['heatmap']?.showError(rlMsg);
         this.ctx.panels['commodities']?.showError(rlMsg);
       } else if (stocksResult.skipped) {
         this.ctx.statusPanel?.updateApi('Finnhub', { status: 'error' });
         if (stocksResult.data.length === 0) {
           this.ctx.panels['markets']?.showConfigError(finnhubConfigMsg);
         }
+        this.ctx.panels['heatmap']?.showConfigError(finnhubConfigMsg);
       } else {
         this.ctx.statusPanel?.updateApi('Finnhub', { status: 'ok' });
-      }
 
-      // Sector heatmap: always attempt loading regardless of market rate-limit status
-      const hydratedSectors = getHydratedData('sectors') as GetSectorSummaryResponse | undefined;
-      if (hydratedSectors?.sectors?.length) {
-        const mapped = hydratedSectors.sectors.map((s) => ({ name: s.name, change: s.change }));
-        (this.ctx.panels['heatmap'] as HeatmapPanel).renderHeatmap(mapped);
-      } else if (!stocksResult.skipped) {
-        const sectorsResult = await fetchMultipleStocks(
-          SECTORS.map((s) => ({ ...s, display: s.name })),
-          {
-            onBatch: (partialSectors) => {
-              (this.ctx.panels['heatmap'] as HeatmapPanel).renderHeatmap(
-                partialSectors.map((s) => ({ name: s.name, change: s.change }))
-              );
-            },
-          }
-        );
-        (this.ctx.panels['heatmap'] as HeatmapPanel).renderHeatmap(
-          sectorsResult.data.map((s) => ({ name: s.name, change: s.change }))
-        );
-      } else {
-        this.ctx.panels['heatmap']?.showConfigError(finnhubConfigMsg);
+        const hydratedSectors = getHydratedData('sectors') as GetSectorSummaryResponse | undefined;
+        if (hydratedSectors?.sectors?.length) {
+          const mapped = hydratedSectors.sectors.map((s) => ({ name: s.name, change: s.change }));
+          (this.ctx.panels['heatmap'] as HeatmapPanel).renderHeatmap(mapped);
+        } else {
+          const sectorsResult = await fetchMultipleStocks(
+            SECTORS.map((s) => ({ ...s, display: s.name })),
+            {
+              onBatch: (partialSectors) => {
+                (this.ctx.panels['heatmap'] as HeatmapPanel).renderHeatmap(
+                  partialSectors.map((s) => ({ name: s.name, change: s.change }))
+                );
+              },
+            }
+          );
+          (this.ctx.panels['heatmap'] as HeatmapPanel).renderHeatmap(
+            sectorsResult.data.map((s) => ({ name: s.name, change: s.change }))
+          );
+        }
       }
 
       const commoditiesPanel = this.ctx.panels['commodities'] as CommoditiesPanel;
       const mapCommodity = (c: MarketData) => ({ display: c.display, price: c.price, change: c.change, sparkline: c.sparkline });
 
-      // Hydrate commodities from bootstrap (same pattern as sectors/markets)
-      const hydratedCommodities = getHydratedData('commodityQuotes') as ListMarketQuotesResponse | undefined;
       let commoditiesLoaded = stocksResult.rateLimited && stocksResult.data.length === 0;
-
-      if (!commoditiesLoaded && hydratedCommodities?.quotes?.length) {
-        const symbolMetaMap = new Map(COMMODITIES.map((s) => [s.symbol, s]));
-        const data = hydratedCommodities.quotes.map((q) => ({
-          symbol: q.symbol,
-          name: symbolMetaMap.get(q.symbol)?.name || q.name,
-          display: symbolMetaMap.get(q.symbol)?.display || q.display || q.symbol,
-          price: q.price != null ? q.price : null,
-          change: q.change ?? null,
-          sparkline: q.sparkline?.length > 0 ? q.sparkline : undefined,
-        }));
-        const mapped = data.map(mapCommodity);
-        if (mapped.some(d => d.price !== null)) {
-          commoditiesPanel.renderCommodities(mapped);
-          commoditiesLoaded = true;
-        }
-      }
-
       for (let attempt = 0; attempt < 3 && !commoditiesLoaded; attempt++) {
         if (attempt > 0) {
           commoditiesPanel.showRetrying();
@@ -1030,7 +989,6 @@ export class DataLoaderManager implements AppModule {
         }
         const commoditiesResult = await fetchMultipleStocks(COMMODITIES, {
           onBatch: (partial) => commoditiesPanel.renderCommodities(partial.map(mapCommodity)),
-          useCommodityBreaker: true,
         });
         const mapped = commoditiesResult.data.map(mapCommodity);
         if (mapped.some(d => d.price !== null)) {

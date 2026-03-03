@@ -53,14 +53,12 @@ export function getHeatmapClass(change: number): string {
 export function debounce<T extends (...args: unknown[]) => void>(
   fn: T,
   delay: number
-): ((...args: Parameters<T>) => void) & { cancel(): void } {
+): (...args: Parameters<T>) => void {
   let timeoutId: ReturnType<typeof setTimeout>;
-  const debounced = (...args: Parameters<T>) => {
+  return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn(...args), delay);
   };
-  debounced.cancel = () => { clearTimeout(timeoutId); };
-  return debounced;
 }
 
 export function throttle<T extends (...args: unknown[]) => void>(
@@ -78,16 +76,15 @@ export function throttle<T extends (...args: unknown[]) => void>(
   };
 }
 
-export function rafSchedule<T extends (...args: unknown[]) => void>(fn: T): ((...args: Parameters<T>) => void) & { cancel(): void } {
+export function rafSchedule<T extends (...args: unknown[]) => void>(fn: T): (...args: Parameters<T>) => void {
   // Frame-synchronized scheduling for visual updates; batches repeated calls into one render frame.
   let scheduled = false;
-  let rafId = 0;
   let lastArgs: Parameters<T> | null = null;
-  const wrapped = (...args: Parameters<T>) => {
+  return (...args: Parameters<T>) => {
     lastArgs = args;
     if (!scheduled) {
       scheduled = true;
-      rafId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
         scheduled = false;
         if (lastArgs) {
           fn(...lastArgs);
@@ -96,12 +93,6 @@ export function rafSchedule<T extends (...args: unknown[]) => void>(fn: T): ((..
       });
     }
   };
-  wrapped.cancel = () => {
-    cancelAnimationFrame(rafId);
-    scheduled = false;
-    lastArgs = null;
-  };
-  return wrapped;
 }
 
 export function loadFromStorage<T>(key: string, defaultValue: T): T {
@@ -152,7 +143,7 @@ export function saveToStorage<T>(key: string, value: T): void {
 }
 
 export function generateId(): string {
-  return `id-${crypto.randomUUID()}`;
+  return `id-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 /** Breakpoint (px): below this width the app uses the simplified mobile layout. Must match CSS @media (max-width: …). */

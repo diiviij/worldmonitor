@@ -12,6 +12,7 @@ import { initDB, cleanOldSnapshots, isAisConfigured, initAisStream, isOutagesCon
 import { mlWorker } from '@/services/ml-worker';
 import { getAiFlowSettings, subscribeAiFlowChange, isHeadlineMemoryEnabled } from '@/services/ai-flow-settings';
 import { startLearning } from '@/services/country-instability';
+import { dataFreshness } from '@/services/data-freshness';
 import { loadFromStorage, parseMapUrlState, saveToStorage, isMobileDevice } from '@/utils';
 import type { ParsedMapUrlState } from '@/utils';
 import { SignalModal, IntelligenceGapBadge, BreakingNewsBanner } from '@/components';
@@ -47,7 +48,6 @@ export class App {
   private state: AppContext;
   private pendingDeepLinkCountry: string | null = null;
   private pendingDeepLinkExpanded = false;
-  private pendingDeepLinkStoryCode: string | null = null;
 
   private panelLayout: PanelLayoutManager;
   private dataLoader: DataLoaderManager;
@@ -431,21 +431,15 @@ export class App {
 
     // Phase 5: Event listeners + URL sync
     this.eventHandlers.init();
-    // Capture deep link params BEFORE URL sync overwrites them
+    // Capture ?country= and ?expanded= BEFORE URL sync overwrites them
     const initState = parseMapUrlState(window.location.search, this.state.mapLayers);
     this.pendingDeepLinkCountry = initState.country ?? null;
     this.pendingDeepLinkExpanded = initState.expanded === true;
-    const earlyParams = new URLSearchParams(window.location.search);
-    this.pendingDeepLinkStoryCode = earlyParams.get('c') ?? null;
     this.eventHandlers.setupUrlStateSync();
 
     this.state.countryBriefPage?.onStateChange?.(() => {
       this.eventHandlers.syncUrlState();
     });
-
-    // Start deep link handling early — its retry loop polls hasSufficientData()
-    // independently, so it must not be gated behind loadAllData() which can hang.
-    this.handleDeepLinks();
 
     // Phase 6: Data loading
     this.dataLoader.syncDataFreshnessWithLayers();
@@ -470,7 +464,8 @@ export class App {
     this.eventHandlers.setupSnapshotSaving();
     cleanOldSnapshots().catch((e) => console.warn('[Storage] Snapshot cleanup failed:', e));
 
-    // Phase 8: Update checks
+    // Phase 8: Deep links + update checks
+    this.handleDeepLinks();
     this.desktopUpdater.init();
 
     // Analytics
@@ -499,22 +494,34 @@ export class App {
 
   private handleDeepLinks(): void {
     const url = new URL(window.location.href);
-    const DEEP_LINK_INITIAL_DELAY_MS = 1500;
+    const MAX_DEEP_LINK_RETRIES = 60;
+    const DEEP_LINK_RETRY_INTERVAL_MS = 500;
+    const DEEP_LINK_INITIAL_DELAY_MS = 2000;
 
-    // Check for country brief deep link: ?c=IR (captured early before URL sync)
-    const storyCode = this.pendingDeepLinkStoryCode ?? url.searchParams.get('c');
-    this.pendingDeepLinkStoryCode = null;
-    if (url.pathname === '/story' || storyCode) {
-      const countryCode = storyCode;
+    // Check for story deep link: /story?c=UA&t=ciianalysis
+    if (url.pathname === '/story' || url.searchParams.has('c')) {
+      const countryCode = url.searchParams.get('c');
       if (countryCode) {
-        trackDeeplinkOpened('country', countryCode);
+        trackDeeplinkOpened('story', countryCode);
         const countryName = getCountryNameByCode(countryCode.toUpperCase()) || countryCode;
-        setTimeout(() => {
-          this.countryIntel.openCountryBriefByCode(countryCode.toUpperCase(), countryName, {
-            maximize: true,
-          });
-          this.eventHandlers.syncUrlState();
-        }, DEEP_LINK_INITIAL_DELAY_MS);
+
+        let attempts = 0;
+        const checkAndOpen = () => {
+          if (dataFreshness.hasSufficientData() && this.state.latestClusters.length > 0) {
+            this.countryIntel.openCountryStory(countryCode.toUpperCase(), countryName);
+            return;
+          }
+          attempts += 1;
+          if (attempts >= MAX_DEEP_LINK_RETRIES) {
+            this.eventHandlers.showToast('Data not available');
+            return;
+          } else {
+            setTimeout(checkAndOpen, DEEP_LINK_RETRY_INTERVAL_MS);
+          }
+        };
+        setTimeout(checkAndOpen, DEEP_LINK_INITIAL_DELAY_MS);
+
+        history.replaceState(null, '', '/');
         return;
       }
     }
@@ -527,12 +534,24 @@ export class App {
     if (deepLinkCountry) {
       trackDeeplinkOpened('country', deepLinkCountry);
       const cName = CountryIntelManager.resolveCountryName(deepLinkCountry);
-      setTimeout(() => {
-        this.countryIntel.openCountryBriefByCode(deepLinkCountry, cName, {
-          maximize: deepLinkExpanded,
-        });
-        this.eventHandlers.syncUrlState();
-      }, DEEP_LINK_INITIAL_DELAY_MS);
+      let attempts = 0;
+      const checkAndOpenBrief = () => {
+        if (dataFreshness.hasSufficientData()) {
+          this.countryIntel.openCountryBriefByCode(deepLinkCountry, cName, {
+            maximize: deepLinkExpanded,
+          });
+          this.eventHandlers.syncUrlState();
+          return;
+        }
+        attempts += 1;
+        if (attempts >= MAX_DEEP_LINK_RETRIES) {
+          this.eventHandlers.showToast('Data not available');
+          return;
+        } else {
+          setTimeout(checkAndOpenBrief, DEEP_LINK_RETRY_INTERVAL_MS);
+        }
+      };
+      setTimeout(checkAndOpenBrief, DEEP_LINK_INITIAL_DELAY_MS);
     }
   }
 

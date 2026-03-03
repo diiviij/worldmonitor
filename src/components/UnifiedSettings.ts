@@ -11,7 +11,7 @@ import type { StatusPanel } from './StatusPanel';
 
 const GEAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
 
-const DESKTOP_RELEASES_URL = 'https://github.com/koala73/worldmonitor/releases';
+
 
 export interface UnifiedSettingsConfig {
   getPanelSettings: () => Record<string, PanelConfig>;
@@ -21,7 +21,6 @@ export interface UnifiedSettingsConfig {
   setSourcesEnabled: (names: string[], enabled: boolean) => void;
   getAllSourceNames: () => string[];
   getLocalizedPanelName: (key: string, fallback: string) => string;
-  resetLayout: () => void;
   isDesktopApp: boolean;
   statusPanel?: StatusPanel | null;
 }
@@ -83,12 +82,6 @@ export class UnifiedSettings {
         if (searchInput) searchInput.value = '';
         this.renderPanelCategoryPills();
         this.renderPanelsTab();
-        return;
-      }
-
-      // Reset layout
-      if (target.closest('.panels-reset-layout')) {
-        this.config.resetLayout();
         return;
       }
 
@@ -251,9 +244,6 @@ export class UnifiedSettings {
             <input type="text" placeholder="${t('header.filterPanels')}" value="${escapeHtml(this.panelFilter)}" />
           </div>
           <div class="panel-toggle-grid" id="usPanelToggles"></div>
-          <div class="panels-footer">
-            <button class="panels-reset-layout">${t('header.resetLayout')}</button>
-          </div>
         </div>
         <div class="unified-settings-tab-panel${this.activeTab === 'sources' ? ' active' : ''}" data-panel-id="sources">
           <div class="unified-settings-region-wrapper">
@@ -321,14 +311,7 @@ export class UnifiedSettings {
       html += this.toggleRowHtml('us-browser', t('components.insights.aiFlowBrowserLabel'), t('components.insights.aiFlowBrowserDesc'), settings.browserModel);
       html += `<div class="ai-flow-toggle-warn" style="display:${settings.browserModel ? 'block' : 'none'}">${t('components.insights.aiFlowBrowserWarn')}</div>`;
 
-      // Ollama CTA
-      html += `
-        <div class="ai-flow-cta">
-          <div class="ai-flow-cta-title">${t('components.insights.aiFlowOllamaCta')}</div>
-          <div class="ai-flow-cta-desc">${t('components.insights.aiFlowOllamaCtaDesc')}</div>
-          <a href="${DESKTOP_RELEASES_URL}" target="_blank" rel="noopener noreferrer" class="ai-flow-cta-link">${t('components.insights.aiFlowDownloadDesktop')}</a>
-        </div>
-      `;
+
     }
 
     // Intelligence section
@@ -461,7 +444,6 @@ export class UnifiedSettings {
     try {
       if ('storage' in navigator && 'estimate' in navigator.storage) {
         const estimate = await navigator.storage.estimate();
-        if (!container.isConnected) return;
         const used = estimate.usage ? (estimate.usage / 1024 / 1024).toFixed(2) : '0';
         const quota = estimate.quota ? (estimate.quota / 1024 / 1024).toFixed(0) : 'N/A';
         container.innerHTML = `<div class="status-row">
@@ -472,7 +454,6 @@ export class UnifiedSettings {
         container.innerHTML = `<div class="status-row">${t('components.status.storageUnavailable')}</div>`;
       }
     } catch {
-      if (!container.isConnected) return;
       container.innerHTML = `<div class="status-row">${t('components.status.storageUnavailable')}</div>`;
     }
   }

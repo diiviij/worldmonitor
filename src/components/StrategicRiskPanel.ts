@@ -131,7 +131,6 @@ export class StrategicRiskPanel extends Panel {
     this.usedCachedScores = false;
     if (inLearning) {
       const cached = await fetchCachedRiskScores(this.signal);
-      if (!this.element?.isConnected) return false;
       if (cached && cached.strategicRisk) {
         this.usedCachedScores = true;
         console.log('[StrategicRiskPanel] Using cached scores from backend');
