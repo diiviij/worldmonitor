@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Provider Header Mockup</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --text-secondary: #ccc;
+      --green: #44ff88;
+      --yellow: #ffaa00;
+      --red: #ff4444;
+      --primary: #60a5fa;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: var(--bg);
+      font-family: 'SF Mono', 'Monaco', monospace;
+      color: var(--text);
+    }
+
+    .mockup-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 40px;
+      color: var(--text-secondary);
+    }
+
+    /* Header Mockup */
+    .header-mockup {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      height: 40px;
+      margin-bottom: 60px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .version {
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .region-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: 16px;
+      padding-left: 12px;
+      border-left: 1px solid var(--border);
+    }
+
+    .region-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .region-select {
+      padding: 4px 24px 4px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 11px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23888' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+    }
+
+    /* AI Provider Selector */
+    .ai-provider-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0;
+      margin-left: 8px;
+      border-left: 1px solid var(--border);
+      padding-left: 12px;
+    }
+
+    .ai-provider-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .ai-provider-label svg {
+      flex-shrink: 0;
+    }
+
+    .ai-provider-select {
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 160px;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239aa0a6'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 24px;
+    }
+
+    .ai-provider-key-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ai-provider-api-key-input {
+      width: 180px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .ai-provider-save-key,
+    .ai-provider-toggle-vis {
+      padding: 6px 8px;
+      font-size: 14px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+
+    .ai-provider-save-key:hover,
+    .ai-provider-toggle-vis:hover {
+      background: rgba(96, 165, 250, 0.1);
+      border-color: var(--primary);
+    }
+
+    .ai-provider-status {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--green);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .settings-btn {
+      padding: 6px 12px;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      color: white;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    /* Variants */
+    .variant-label {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 40px;
+      margin-top: 40px;
+    }
+
+    .state-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .state-header {
+      padding: 12px 16px;
+      background: rgba(96, 165, 250, 0.1);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .state-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .state-body {
+      padding: 16px;
+    }
+
+    .annotation {
+      margin-top: 60px;
+      padding: 20px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 8px;
+    }
+
+    .annotation h3 {
+      margin: 0 0 12px;
+      color: var(--yellow);
+      font-size: 14px;
+    }
+
+    .annotation ul {
+      margin: 0;
+      padding-left: 20px;
+      list-style: disc;
+    }
+
+    .annotation li {
+      margin: 6px 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="mockup-container">
+    <h2>🎨 AI Provider Selector - Header Integration Mockups</h2>
+
+    <!-- State 1: Configured Provider -->
+    <div class="variant-label">State 1: Provider Configured (Groq)</div>
+    <div class="header-mockup">
+      <div class="header-left">
+        <div>
+          <span class="logo">MONITOR</span>
+          <span class="version">v1.0</span>
+        </div>
+        
+        <div class="region-selector">
+          <span class="region-label">Region:</span>
+          <select class="region-select">
+            <option>Global</option>
+            <option>Americas</option>
+            <option selected>MENA</option>
+            <option>Europe</option>
+            <option>Asia</option>
+          </select>
+        </div>
+
+        <div class="ai-provider-wrapper">
+          <label class="ai-provider-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+              <path d="M12 8v4l3 3"/>
+            </svg>
+            <span>AI Provider</span>
+          </label>
+          
+          <select class="ai-provider-select">
+            <option selected>✓ Groq</option>
+            <option>○ OpenAI</option>
+            <option>○ Gemini</option>
+            <option>○ OpenRouter</option>
+            <option>○ Ollama</option>
+          </select>
+
+          <div class="ai-provider-key-input-wrapper">
+            <input type="password" class="ai-provider-api-key-input" value="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" readonly />
+            <button class="ai-provider-save-key" title="Save">💾</button>
+            <button class="ai-provider-toggle-vis" title="Show/Hide">👁️</button>
+          </div>
+
+          <div class="ai-provider-status">✓ Groq is configured</div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="search-btn">⌘K Search</button>
+        <button class="settings-btn">Settings</button>
+      </div>
+    </div>
+
+    <!-- State 2: Needs API Key -->
+    <div class="variant-label" style="margin-top: 40px;">State 2: Provider Needs API Key (OpenAI)</div>
+    <div class="header-mockup">
+      <div class="header-left">
+        <div>
+          <span class="logo">MONITOR</span>
+          <span class="version">v1.0</span>
+        </div>
+        
+        <div class="region-selector">
+          <span class="region-label">Region:</span>
+          <select class="region-select">
+            <option>Global</option>
+            <option>Americas</option>
+            <option>MENA</option>
+            <option selected>Europe</option>
+            <option>Asia</option>
+          </select>
+        </div>
+
+        <div class="ai-provider-wrapper">
+          <label class="ai-provider-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+              <path d="M12 8v4l3 3"/>
+            </svg>
+            <span>AI Provider</span>
+          </label>
+          
+          <select class="ai-provider-select">
+            <option>✓ Groq</option>
+            <option selected>○ OpenAI</option>
+            <option>○ Gemini</option>
+            <option>○ OpenRouter</option>
+            <option>○ Ollama</option>
+          </select>
+
+          <div class="ai-provider-key-input-wrapper">
+            <input type="password" class="ai-provider-api-key-input" placeholder="sk-..." />
+            <button class="ai-provider-save-key" title="Save">💾</button>
+            <button class="ai-provider-toggle-vis" title="Show/Hide">👁️</button>
+          </div>
+
+          <div class="ai-provider-status" style="background: rgba(251, 191, 36, 0.15); color: var(--yellow);">
+            ○ OpenAI needs API key <a href="#" style="color: inherit; text-decoration: underline;">Get Key</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="search-btn">⌘K Search</button>
+        <button class="settings-btn">Settings</button>
+      </div>
+    </div>
+
+    <!-- Annotations -->
+    <div class="annotation">
+      <h3>📌 Key Features</h3>
+      <ul>
+        <li><strong>Location:</strong> Header, next to Region Selector - always visible and accessible</li>
+        <li><strong>Provider Dropdown:</strong> Quick selection with status indicators (✓ or ○)</li>
+        <li><strong>API Key Input:</strong> Direct text field to enter/paste API keys without opening settings</li>
+        <li><strong>Save Button (💾):</strong> One-click save or press Enter for quick workflow</li>
+        <li><strong>Toggle Visibility (👁️):</strong> Show/hide masked API key for verification</li>
+        <li><strong>Status Indicator:</strong> Real-time feedback (green ✓ / yellow ○ / red ✗)</li>
+        <li><strong>Compact Design:</strong> Matches header styling, minimal footprint</li>
+        <li><strong>Multi-Provider:</strong> Remembers API keys for all providers independently</li>
+      </ul>
+    </div>
+
+    <!-- Component States Grid -->
+    <div class="state-grid">
+      <div class="state-card">
+        <div class="state-header">
+          <div class="state-title">🎯 Workflow: First-Time Setup</div>
+        </div>
+        <div class="state-body">
+          <ol style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.8; color: var(--text-secondary);">
+            <li>Select provider from dropdown (e.g., "OpenAI")</li>
+            <li>See status: "○ OpenAI needs API key"</li>
+            <li>Click "Get Key" link OR paste existing key</li>
+            <li>Enter API key in input field</li>
+            <li>Click 💾 Save button (or press Enter)</li>
+            <li>Status updates: "✓ OpenAI is configured"</li>
+            <li>Done! Summarization now uses OpenAI first</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="state-card">
+        <div class="state-header">
+          <div class="state-title">⚡ Workflow: Switching Providers</div>
+        </div>
+        <div class="state-body">
+          <ol style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.8; color: var(--text-secondary);">
+            <li>Click dropdown, select different provider</li>
+            <li>Input auto-fills with saved key (masked)</li>
+            <li>Status shows configuration state instantly</li>
+            <li>If not configured: enter key and save</li>
+            <li>If configured: ready to use immediately</li>
+            <li>System automatically switches primary provider</li>
+            <li>Fallback chain updated accordingly</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Provider Selection - UI Mockup</title>
+  <style>
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --text-primary: #e4e4e7;
+      --text-secondary: #a1a1aa;
+      --border: #3f3f5f;
+      --accent: #60a5fa;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #f87171;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 40px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+
+    /* AI Provider Selector Card */
+    .ai-provider-selector {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .ai-provider-selector h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .ai-provider-selector p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .provider-select-wrapper {
+      margin-bottom: 16px;
+    }
+
+    .provider-select {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 15px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .provider-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+    }
+
+    .provider-status {
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    .provider-status.ok {
+      background: rgba(52, 211, 153, 0.1);
+      border-left: 3px solid var(--green);
+      color: var(--text-secondary);
+    }
+
+    .provider-status.warn {
+      background: rgba(251, 191, 36, 0.1);
+      border-left: 3px solid var(--yellow);
+      color: var(--text-secondary);
+    }
+
+    .get-key-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .get-key-link:hover {
+      text-decoration: underline;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 24px 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .divider span {
+      padding: 0 16px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Feature Cards */
+    .feature-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .feature-card.ready {
+      border-left: 3px solid var(--green);
+    }
+
+    .feature-card.needs {
+      border-left: 3px solid var(--yellow);
+    }
+
+    .feature-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .feature-header:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      transition: 0.2s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    input:checked + .slider {
+      background: var(--accent);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(16px);
+    }
+
+    .feature-info {
+      flex: 1;
+    }
+
+    .feature-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .feature-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .feature-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .pill-ok {
+      color: var(--green);
+      background: rgba(52, 211, 153, 0.12);
+    }
+
+    .pill-warn {
+      color: var(--yellow);
+      background: rgba(251, 191, 36, 0.12);
+    }
+
+    .chevron {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .feature-body {
+      padding: 0 16px 16px;
+    }
+
+    .secret-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 10px 0;
+      align-items: center;
+    }
+
+    .secret-row + .secret-row {
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .secret-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .secret-status {
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .status-ok { color: var(--green); }
+    .status-warn { color: var(--yellow); }
+
+    .secret-input-wrapper {
+      grid-column: 1 / -1;
+      position: relative;
+    }
+
+    .secret-input {
+      width: 100%;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .secret-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+    }
+
+    .get-key-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(96, 165, 250, 0.1);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      border-radius: 4px;
+      padding: 4px 10px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .get-key-btn:hover {
+      background: rgba(96, 165, 250, 0.2);
+      border-color: var(--accent);
+    }
+
+    .fallback-text {
+      font-size: 12px;
+      color: var(--yellow);
+      margin-top: 8px;
+      padding-left: 16px;
+    }
+
+    /* Info Box */
+    .info-box {
+      background: rgba(96, 165, 250, 0.1);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 32px;
+    }
+
+    .info-box h4 {
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .info-box li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 4px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .info-box li:before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 AI & Summarization Settings</h1>
+    <p class="subtitle">Configure your AI providers and manage summarization settings</p>
+
+    <!-- AI Provider Selector -->
+    <div class="ai-provider-selector">
+      <h3>AI Provider Selection</h3>
+      <p>Select your preferred AI provider for summarization. The selected provider will be used first, with automatic fallback to others if unavailable.</p>
+      
+      <div class="provider-select-wrapper">
+        <select class="provider-select">
+          <option value="groq">Groq - Fast inference (14,400 req/day free) [✓]</option>
+          <option value="openrouter">OpenRouter - Multiple models (50 req/day free) [✗]</option>
+          <option value="openai">OpenAI - GPT-4 and GPT-3.5 models [✗]</option>
+          <option value="gemini">Google Gemini - Gemini Pro models [✗]</option>
+          <option value="ollama">Ollama (Local) - Run models locally [✗]</option>
+        </select>
+      </div>
+
+      <div class="provider-status ok">
+        ✓ Groq is ready to use
+      </div>
+    </div>
+
+    <div class="divider">
+      <span>Configure Individual Providers</span>
+    </div>
+
+    <!-- Feature Cards -->
+    <div class="feature-card ready">
+      <div class="feature-header">
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="slider"></span>
+        </label>
+        <div class="feature-info">
+          <div class="feature-name">Groq summarization</div>
+          <div class="feature-desc">Primary fast LLM provider used for AI summary generation</div>
+        </div>
+        <span class="feature-pill pill-ok">Ready</span>
+        <span class="chevron">⌄</span>
+      </div>
+      <div class="feature-body">
+        <div class="secret-row">
+          <div class="secret-label">Groq API Key</div>
+          <div class="secret-status status-ok">Valid</div>
+          <div class="secret-input-wrapper">
+            <input type="password" class="secret-input" value="••••••••••••••••">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-card needs">
+      <div class="feature-header">
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="slider"></span>
+        </label>
+        <div class="feature-info">
+          <div class="feature-name">OpenAI summarization</div>
+          <div class="feature-desc">OpenAI GPT models for AI summary generation</div>
+        </div>
+        <span class="feature-pill pill-warn">Needs keys</span>
+        <span class="chevron">⌄</span>
+      </div>
+      <div class="feature-body">
+        <div class="secret-row">
+          <div class="secret-label">OpenAI API Key</div>
+          <div class="secret-status status-warn">Missing</div>
+          <div class="secret-input-wrapper">
+            <input type="password" class="secret-input" placeholder="Enter value...">
+            <a href="#" class="get-key-btn">Get key</a>
+          </div>
+        </div>
+        <p class="fallback-text">Falls back to Groq, then OpenRouter, then local browser model.</p>
+      </div>
+    </div>
+
+    <div class="feature-card needs">
+      <div class="feature-header">
+        <label class="toggle-switch">
+          <input type="checkbox" checked>
+          <span class="slider"></span>
+        </label>
+        <div class="feature-info">
+          <div class="feature-name">Google Gemini summarization</div>
+          <div class="feature-desc">Google Gemini models for AI summary generation</div>
+        </div>
+        <span class="feature-pill pill-warn">Needs keys</span>
+        <span class="chevron">⌄</span>
+      </div>
+      <div class="feature-body">
+        <div class="secret-row">
+          <div class="secret-label">Google Gemini API Key</div>
+          <div class="secret-status status-warn">Missing</div>
+          <div class="secret-input-wrapper">
+            <input type="password" class="secret-input" placeholder="Enter value...">
+            <a href="#" class="get-key-btn">Get key</a>
+          </div>
+        </div>
+        <p class="fallback-text">Falls back to Groq, then OpenRouter, then local browser model.</p>
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <h4>ℹ️ How It Works</h4>
+      <ul>
+        <li>Your selected provider from the dropdown is tried first</li>
+        <li>If unavailable, automatically falls back through other configured providers</li>
+        <li>Final fallback to browser-based T5 model (works offline)</li>
+        <li>All API calls are cached to minimize costs and improve performance</li>
+        <li>Switch providers anytime without restarting the app</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

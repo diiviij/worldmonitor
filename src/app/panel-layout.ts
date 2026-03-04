@@ -48,6 +48,8 @@ import { GoodThingsDigestPanel } from '@/components/GoodThingsDigestPanel';
 import { SpeciesComebackPanel } from '@/components/SpeciesComebackPanel';
 import { RenewableEnergyPanel } from '@/components/RenewableEnergyPanel';
 import { GivingPanel } from '@/components';
+import { ProductivityTopBar } from '@/components/ProductivityTopBar';
+import { AIDayPlanner } from '@/components/AIDayPlanner';
 import { focusInvestmentOnMap } from '@/services/investments-focus';
 import { debounce, saveToStorage } from '@/utils';
 import { escapeHtml } from '@/utils/sanitize';
@@ -192,6 +194,10 @@ export class PanelLayoutManager implements AppModule {
         </div>
       </div>
       <div class="main-content">
+        <!-- Productivity Top Bar (Kanban + Stopwatch) - Full Width -->
+        <div id="productivityTopBarMount"></div>
+        <!-- AI Day Planner - Full Width with distinct color -->
+        <div id="dayPlannerMount"></div>
         <div class="map-section" id="mapSection">
           <div class="panel-header">
             <div class="panel-header-left">
@@ -335,6 +341,20 @@ export class PanelLayoutManager implements AppModule {
   }
 
   private createPanels(): void {
+    // Mount Productivity Top Bar (Kanban + Stopwatch)
+    const prodMount = document.getElementById('productivityTopBarMount');
+    if (prodMount) {
+      const prodBar = new ProductivityTopBar();
+      prodMount.appendChild(prodBar.getElement());
+    }
+    
+    // Mount AI Day Planner
+    const dayPlannerMount = document.getElementById('dayPlannerMount');
+    if (dayPlannerMount) {
+      const dayPlanner = new AIDayPlanner();
+      dayPlanner.mount(dayPlannerMount);
+    }
+    
     const panelsGrid = document.getElementById('panelsGrid')!;
 
     const mapContainer = document.getElementById('mapContainer') as HTMLElement;

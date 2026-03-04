@@ -15,7 +15,7 @@ import { startLearning } from '@/services/country-instability';
 import { dataFreshness } from '@/services/data-freshness';
 import { loadFromStorage, parseMapUrlState, saveToStorage, isMobileDevice } from '@/utils';
 import type { ParsedMapUrlState } from '@/utils';
-import { SignalModal, IntelligenceGapBadge, BreakingNewsBanner } from '@/components';
+import { SignalModal, IntelligenceGapBadge, BreakingNewsBanner, AIProviderSelector } from '@/components';
 import { initBreakingNewsAlerts, destroyBreakingNewsAlerts } from '@/services/breaking-news-alerts';
 import type { ServiceStatusPanel } from '@/components/ServiceStatusPanel';
 import type { StablecoinPanel } from '@/components/StablecoinPanel';
@@ -264,6 +264,7 @@ export class App {
       pizzintIndicator: null,
       countryBriefPage: null,
       countryTimeline: null,
+      aiProviderSelector: null,
       positivePanel: null,
       countersPanel: null,
       progressPanel: null,
@@ -386,12 +387,28 @@ export class App {
     // Phase 1: Layout (creates map + panels — they'll find hydrated data)
     this.panelLayout.init();
 
+    // Mount AI Provider Selector in header next to region selector
+    const regionSelect = document.getElementById('regionSelect');
+    if (regionSelect && regionSelect.parentElement) {
+      const aiProviderContainer = document.createElement('div');
+      aiProviderContainer.id = 'aiProviderSelectorMount';
+      aiProviderContainer.className = 'ai-provider-header-wrapper';
+      regionSelect.parentElement.insertBefore(aiProviderContainer, regionSelect.nextSibling);
+      
+      const providerSelector = new AIProviderSelector();
+      providerSelector.mount(aiProviderContainer);
+      
+      // Store reference for cleanup
+      this.state.aiProviderSelector = providerSelector;
+    }
+
     // Happy variant: pre-populate panels from persistent cache for instant render
     if (SITE_VARIANT === 'happy') {
       await this.dataLoader.hydrateHappyPanelsFromCache();
     }
 
     // Phase 2: Shared UI components
+    this.state.aiProviderSelector = null;
     this.state.signalModal = new SignalModal();
     this.state.signalModal.setLocationClickHandler((lat, lon) => {
       this.state.map?.setCenter(lat, lon, 4);
@@ -486,6 +503,7 @@ export class App {
 
     // Clean up subscriptions, map, AIS, and breaking news
     this.unsubAiFlow?.();
+    this.state.aiProviderSelector?.unmount();
     this.state.breakingBanner?.destroy();
     destroyBreakingNewsAlerts();
     this.state.map?.destroy();

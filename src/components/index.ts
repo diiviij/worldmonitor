@@ -46,3 +46,6 @@ export * from './TelegramIntelPanel';
 export * from './BreakingNewsBanner';
 export * from './GulfEconomiesPanel';
 export * from './WorldClockPanel';
+export * from './ProductivityTopBar';
+export { AIProviderSelector } from './AIProviderSelector';
+export { AIDayPlanner } from './AIDayPlanner';

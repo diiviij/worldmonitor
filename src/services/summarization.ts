@@ -15,8 +15,9 @@ import { trackLLMUsage, trackLLMFailure } from './analytics';
 import { NewsServiceClient, type SummarizeArticleResponse } from '@/generated/client/worldmonitor/news/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
 import { buildSummaryCacheKey } from '@/utils/summary-cache-key';
+import { getSelectedAIProvider } from './ai-provider-manager';
 
-export type SummarizationProvider = 'ollama' | 'groq' | 'openrouter' | 'browser' | 'cache';
+export type SummarizationProvider = 'ollama' | 'groq' | 'openrouter' | 'openai' | 'gemini' | 'browser' | 'cache';
 
 export interface SummarizationResult {
   summary: string;
@@ -47,11 +48,45 @@ interface ApiProviderDef {
   label: string;
 }
 
-const API_PROVIDERS: ApiProviderDef[] = [
-  { featureId: 'aiOllama',      provider: 'ollama',     label: 'Ollama' },
-  { featureId: 'aiGroq',        provider: 'groq',       label: 'Groq AI' },
-  { featureId: 'aiOpenRouter',  provider: 'openrouter', label: 'OpenRouter' },
-];
+/**
+ * Get ordered list of API providers based on user selection
+ * Selected provider is tried first, then falls back to others in order
+ */
+function getOrderedProviders(): ApiProviderDef[] {
+  const selectedProvider = getSelectedAIProvider();
+  
+  // Map provider selection to feature IDs
+  const providerFeatureMap: Record<string, { featureId: RuntimeFeatureId; provider: SummarizationProvider; label: string }> = {
+    groq: { featureId: 'aiGroq', provider: 'groq', label: 'Groq AI' },
+    openrouter: { featureId: 'aiOpenRouter', provider: 'openrouter', label: 'OpenRouter' },
+    openai: { featureId: 'aiOpenAI', provider: 'openai', label: 'OpenAI' },
+    gemini: { featureId: 'aiGemini', provider: 'gemini', label: 'Google Gemini' },
+    ollama: { featureId: 'aiOllama', provider: 'ollama', label: 'Ollama' },
+  };
+  
+  const selected = providerFeatureMap[selectedProvider];
+  if (!selected) {
+    // Default order if selection is invalid
+    return [
+      { featureId: 'aiOllama',      provider: 'ollama',     label: 'Ollama' },
+      { featureId: 'aiGroq',        provider: 'groq',       label: 'Groq AI' },
+      { featureId: 'aiOpenRouter',  provider: 'openrouter', label: 'OpenRouter' },
+    ];
+  }
+  
+  // Build ordered list with selected provider first
+  const allProviders = [
+    { featureId: 'aiOllama',      provider: 'ollama',     label: 'Ollama' },
+    { featureId: 'aiGroq',        provider: 'groq',       label: 'Groq AI' },
+    { featureId: 'aiOpenRouter',  provider: 'openrouter', label: 'OpenRouter' },
+    { featureId: 'aiOpenAI',      provider: 'openai',     label: 'OpenAI' },
+    { featureId: 'aiGemini',      provider: 'gemini',     label: 'Google Gemini' },
+  ];
+  
+  // Remove selected from its position and put it first
+  const others = allProviders.filter((p): p is ApiProviderDef => p.featureId !== selected.featureId);
+  return [selected, ...others];
+}
 
 let lastAttemptedProvider = 'none';
 
@@ -146,6 +181,9 @@ async function runApiChain(
   return null;
 }
 
+// Export for use in other modules
+export { getOrderedProviders };
+
 /**
  * Generate a summary using the fallback chain: Ollama -> Groq -> OpenRouter -> Browser T5
  * Server-side Redis caching is handled by the SummarizeArticle RPC handler
@@ -194,16 +232,17 @@ async function generateSummaryInternal(
   }
 
   if (BETA_MODE) {
+    const providers = getOrderedProviders();
     const modelReady = mlWorker.isAvailable && mlWorker.isModelLoaded('summarization-beta');
 
     if (modelReady) {
-      const totalSteps = 1 + API_PROVIDERS.length;
+      const totalSteps = 1 + providers.length;
       // Model already loaded -- use browser T5-small first
       if (!options?.skipBrowserFallback) {
         onProgress?.(1, totalSteps, 'Running local AI model (beta)...');
         const browserResult = await tryBrowserT5(headlines, 'summarization-beta');
         if (browserResult) {
-          const groqProvider = API_PROVIDERS.find(p => p.provider === 'groq');
+          const groqProvider = providers.find(p => p.provider === 'groq');
           if (groqProvider && !options?.skipCloudProviders) tryApiProvider(groqProvider, headlines, geoContext).catch(() => {});
 
           return browserResult;
@@ -212,18 +251,18 @@ async function generateSummaryInternal(
 
       // Warm model failed inference -- fallback through API providers
       if (!options?.skipCloudProviders) {
-        const chainResult = await runApiChain(API_PROVIDERS, headlines, geoContext, undefined, onProgress, 2, totalSteps);
+        const chainResult = await runApiChain(providers, headlines, geoContext, undefined, onProgress, 2, totalSteps);
         if (chainResult) return chainResult;
       }
     } else {
-      const totalSteps = API_PROVIDERS.length + 2;
+      const totalSteps = providers.length + 2;
       if (mlWorker.isAvailable && !options?.skipBrowserFallback) {
         mlWorker.loadModel('summarization-beta').catch(() => {});
       }
 
       // API providers while model loads
       if (!options?.skipCloudProviders) {
-        const chainResult = await runApiChain(API_PROVIDERS, headlines, geoContext, undefined, onProgress, 1, totalSteps);
+        const chainResult = await runApiChain(providers, headlines, geoContext, undefined, onProgress, 1, totalSteps);
         if (chainResult) {
           return chainResult;
         }
@@ -231,7 +270,7 @@ async function generateSummaryInternal(
 
       // Last resort: try browser T5 (may have finished loading by now)
       if (mlWorker.isAvailable && !options?.skipBrowserFallback) {
-        onProgress?.(API_PROVIDERS.length + 1, totalSteps, 'Waiting for local AI model...');
+        onProgress?.(providers.length + 1, totalSteps, 'Waiting for local AI model...');
         const browserResult = await tryBrowserT5(headlines, 'summarization-beta');
         if (browserResult) return browserResult;
       }
@@ -244,11 +283,12 @@ async function generateSummaryInternal(
   }
 
   // Normal mode: API chain -> Browser T5
-  const totalSteps = API_PROVIDERS.length + 1;
+  const providers = getOrderedProviders();
+  const totalSteps = providers.length + 1;
   let chainResult: SummarizationResult | null = null;
 
   if (!options?.skipCloudProviders) {
-    chainResult = await runApiChain(API_PROVIDERS, headlines, geoContext, lang, onProgress, 1, totalSteps);
+    chainResult = await runApiChain(providers, headlines, geoContext, lang, onProgress, 1, totalSteps);
   }
   if (chainResult) return chainResult;
 
@@ -275,8 +315,9 @@ export async function translateText(
 ): Promise<string | null> {
   if (!text) return null;
 
-  const totalSteps = API_PROVIDERS.length;
-  for (const [i, providerDef] of API_PROVIDERS.entries()) {
+  const providers = getOrderedProviders();
+  const totalSteps = providers.length;
+  for (const [i, providerDef] of providers.entries()) {
     if (!isFeatureAvailable(providerDef.featureId)) continue;
 
     onProgress?.(i + 1, totalSteps, `Translating with ${providerDef.label}...`);

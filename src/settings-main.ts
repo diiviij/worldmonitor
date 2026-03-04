@@ -32,6 +32,7 @@ import { initI18n, t } from '@/services/i18n';
 import { applyStoredTheme } from '@/utils/theme-manager';
 import { trackFeatureToggle } from '@/services/analytics';
 
+
 let activeSection = 'overview';
 let settingsManager: SettingsManager;
 let _diagCleanup: (() => void) | null = null;
