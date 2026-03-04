@@ -229,6 +229,19 @@ export class EventHandlerManager implements AppModule {
       });
     }
 
+    // Variant Switcher Buttons
+    const variantBtns = document.querySelectorAll('.variant-btn');
+    variantBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const variant = btn.getAttribute('data-variant');
+        if (variant && variant !== SITE_VARIANT) {
+          trackVariantSwitch(SITE_VARIANT, variant);
+          localStorage.setItem('worldmonitor-variant', variant);
+          window.location.reload();
+        }
+      });
+    });
+
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     if (!this.ctx.isDesktopApp && fullscreenBtn) {
       fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());

@@ -279,6 +279,46 @@ canvas,
   gap: 16px;
 }
 
+/* Variant Switcher Buttons - Now in header-left */
+.header-left .variant-switcher {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto; /* Push to right side of header-left */
+}
+
+.variant-btn {
+  padding: 6px 12px;
+  font-size: 0.85em;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.variant-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.variant-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Responsive: hide variant switcher on small screens */
+@media (max-width: 1200px) {
+  .variant-switcher {
+    display: none;
+  }
+}
+
 /* Variant Switcher */
 .variant-switcher {
   display: flex;
@@ -3464,6 +3504,81 @@ body.playback-mode .status-dot {
 }
 
 /* ==========================================================================
+   Merged Productivity Section (Bottom of Page)
+   AI Day Planner + Kanban + Stopwatch Side by Side
+   ========================================================================== */
+.merged-productivity-section {
+  width: 100%;
+  margin: 20px 10px 10px 10px;
+  padding: 20px;
+  background: var(--panel-bg);
+  border-top: 3px solid var(--primary);
+  box-sizing: border-box;
+}
+
+.merged-productivity-container {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 20px;
+}
+
+.merged-productivity-container.hidden {
+  display: none;
+}
+
+.merged-day-planner {
+  min-width: 0;
+  border-right: 2px solid var(--border);
+  padding-right: 20px;
+}
+
+.merged-day-planner.full-width {
+  border-right: none;
+  padding-right: 0;
+  width: 100%;
+}
+
+.merged-kanban {
+  min-width: 0;
+}
+
+/* Responsive: stack on smaller screens */
+@media (max-width: 1200px) {
+  .merged-productivity-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .merged-day-planner {
+    border-right: none;
+    border-bottom: 2px solid var(--border);
+    padding-right: 0;
+    padding-bottom: 20px;
+  }
+}
+
+/* ==========================================================================
+   Global Situation & Live TV Rows
+   ========================================================================== */
+.global-situation-row,
+.live-tv-row {
+  width: 100%;
+  padding: 10px;
+  margin: 0 10px;
+  box-sizing: border-box;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.global-situation-row {
+  border-top: 2px solid var(--primary);
+}
+
+.live-tv-row {
+  border-top: 2px solid var(--red);
+}
+
+/* ==========================================================================
    Productivity Top Bar - Professional Kanban (Jira-style)
    ========================================================================== */
 .productivity-top-bar {
@@ -3471,7 +3586,7 @@ body.playback-mode .status-dot {
   display: flex;
   gap: 20px;
   padding: 15px;
-  margin: 10px 10px 0 10px;
+  margin: 0;
   background: var(--panel-bg, #1a1a1a);
   border: 1px solid var(--panel-border, #333);
   border-radius: 8px;

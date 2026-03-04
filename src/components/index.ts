@@ -49,3 +49,4 @@ export * from './WorldClockPanel';
 export * from './ProductivityTopBar';
 export { AIProviderSelector } from './AIProviderSelector';
 export { AIDayPlanner } from './AIDayPlanner';
+export { ProductivitySuite } from './ProductivitySuite';

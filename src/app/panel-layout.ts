@@ -37,6 +37,7 @@ import {
   TelegramIntelPanel,
   GulfEconomiesPanel,
   WorldClockPanel,
+  StatusPanel,
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
 import { PositiveNewsFeedPanel } from '@/components/PositiveNewsFeedPanel';
@@ -48,8 +49,7 @@ import { GoodThingsDigestPanel } from '@/components/GoodThingsDigestPanel';
 import { SpeciesComebackPanel } from '@/components/SpeciesComebackPanel';
 import { RenewableEnergyPanel } from '@/components/RenewableEnergyPanel';
 import { GivingPanel } from '@/components';
-import { ProductivityTopBar } from '@/components/ProductivityTopBar';
-import { AIDayPlanner } from '@/components/AIDayPlanner';
+import { ProductivitySuite } from '@/components/ProductivitySuite';
 import { focusInvestmentOnMap } from '@/services/investments-focus';
 import { debounce, saveToStorage } from '@/utils';
 import { escapeHtml } from '@/utils/sanitize';
@@ -179,6 +179,15 @@ export class PanelLayoutManager implements AppModule {
               <option value="oceania">${t('components.deckgl.views.oceania')}</option>
             </select>
           </div>
+          
+          <!-- Variant Switcher Buttons - Moved to header-left for visibility -->
+          <div class="variant-switcher">
+            <button class="variant-btn ${SITE_VARIANT === 'full' ? 'active' : ''}" data-variant="full" title="Monitor (Default)">🌍 Monitor</button>
+            <button class="variant-btn ${SITE_VARIANT === 'tech' ? 'active' : ''}" data-variant="tech" title="Tech Focus">💻 Tech</button>
+            <button class="variant-btn ${SITE_VARIANT === 'finance' ? 'active' : ''}" data-variant="finance" title="Finance Focus">📈 Finance</button>
+            <button class="variant-btn ${SITE_VARIANT === 'productivity' ? 'active' : ''}" data-variant="productivity" title="Productivity & AI Planning">✨ Productivity</button>
+            <button class="variant-btn ${SITE_VARIANT === 'happy' ? 'active' : ''}" data-variant="happy" title="Positive News Only">😊 Happy</button>
+          </div>
         </div>
         <div class="header-right">
           <button class="search-btn" id="searchBtn"><kbd>⌘K</kbd> ${t('header.search')}</button>
@@ -194,11 +203,12 @@ export class PanelLayoutManager implements AppModule {
         </div>
       </div>
       <div class="main-content">
-        <!-- Productivity Top Bar (Kanban + Stopwatch) - Full Width -->
-        <div id="productivityTopBarMount"></div>
-        <!-- AI Day Planner - Full Width with distinct color -->
-        <div id="dayPlannerMount"></div>
-        <div class="map-section" id="mapSection">
+        ${SITE_VARIANT === 'productivity' ? '' : `
+        <!-- Global Situation (Status Panel) at Top -->
+        <div class="global-situation-row" id="globalSituationMount"></div>
+        `}
+        
+        <div class="map-section" id="mapSection" style="${SITE_VARIANT === 'productivity' ? 'display:none;' : ''}">
           <div class="panel-header">
             <div class="panel-header-left">
               <span class="panel-title">${SITE_VARIANT === 'tech' ? t('panels.techMap') : SITE_VARIANT === 'happy' ? 'Good News Map' : t('panels.map')}</span>
@@ -221,6 +231,9 @@ export class PanelLayoutManager implements AppModule {
           <div class="map-bottom-grid" id="mapBottomGrid"></div>
         </div>
         <div class="panels-grid" id="panelsGrid"></div>
+        
+        <!-- Merged Productivity Section at Bottom (AI Day Planner + Kanban + Stopwatch) -->
+        <div class="merged-productivity-section" id="mergedProductivityMount"></div>
       </div>
     `;
 
@@ -341,21 +354,41 @@ export class PanelLayoutManager implements AppModule {
   }
 
   private createPanels(): void {
-    // Mount Productivity Top Bar (Kanban + Stopwatch)
-    const prodMount = document.getElementById('productivityTopBarMount');
-    if (prodMount) {
-      const prodBar = new ProductivityTopBar();
-      prodMount.appendChild(prodBar.getElement());
-    }
-    
-    // Mount AI Day Planner
-    const dayPlannerMount = document.getElementById('dayPlannerMount');
-    if (dayPlannerMount) {
-      const dayPlanner = new AIDayPlanner();
-      dayPlanner.mount(dayPlannerMount);
-    }
-    
     const panelsGrid = document.getElementById('panelsGrid')!;
+    
+    // Productivity variant: Skip Global Situation, Map, and Panels Grid
+    if (SITE_VARIANT !== 'productivity') {
+      // Global Situation (Status Panel) at Top
+      const globalSituationMount = document.getElementById('globalSituationMount');
+      if (globalSituationMount) {
+        const statusPanel = new StatusPanel();
+        globalSituationMount.appendChild(statusPanel.getElement());
+        this.ctx.statusPanel = statusPanel;
+        this.ctx.panels['status'] = statusPanel;
+      }
+      
+      // Hide panels grid in productivity variant
+      panelsGrid.style.display = 'none';
+    } else {
+      // Productivity variant: Also hide panels grid
+      panelsGrid.style.display = 'none';
+    }
+    
+    // Productivity variant: Mount AI Day Planner + Kanban + Stopwatch
+    if (SITE_VARIANT === 'productivity') {
+      const prodMount = document.getElementById('mergedProductivityMount');
+      if (prodMount) {
+        const suite = new ProductivitySuite();
+        suite.mount(prodMount);
+      }
+    } else {
+      // Other variants: Mount but hide (AI Day Planner only in Productivity tab)
+      const prodMount = document.getElementById('mergedProductivityMount');
+      if (prodMount) {
+        const suite = new ProductivitySuite();
+        suite.mount(prodMount);
+      }
+    }
 
     const mapContainer = document.getElementById('mapContainer') as HTMLElement;
     this.ctx.map = new MapContainer(mapContainer, {

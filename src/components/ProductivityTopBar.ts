@@ -85,7 +85,8 @@ export class ProductivityTopBar {
       </div>
     `;
 
-    this.attachEventListeners();
+    // Wait for DOM to update before attaching listeners
+    setTimeout(() => this.attachEventListeners(), 0);
   }
 
   private renderColumn(_status: string, title: string, _bgColor: string): string {
